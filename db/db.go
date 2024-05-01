@@ -19,7 +19,6 @@ func Connect() {
 	}
 	DB = db
 	CreateTable()
-	//CreateTableOfOffers()
 	err = db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
@@ -36,30 +35,21 @@ func PingDB() error {
 
 
 
-/*
-func CreateTable() {
+func AddUser(username, country, tel string) error {
 	if DB == nil {
-		log.Fatal("Database connection is not established. Call Connect function first.")
+		return fmt.Errorf("database connection is not established. Call Connect function first")
 	}
+
 	query := `
-	CREATE TABLE IF NOT EXISTS user_data (
-		username VARCHAR(255),
-		country VARCHAR(255),
-		 
-		tel VARCHAR(255),
-		role VARCHAR(255),
-		registration_data VARCHAR(255),
-		avatar VARCHAR(255),
-		last_time_at_network VARCHAR(255),
-		chats JSONB,
-        user_id VARCHAR(255),
-        describtion VARCHAR(255)
-	);
+	INSERT INTO user_data (username, country, tel)
+	VALUES ($1, $2, $3)
 	`
-	_, err := DB.Exec(query)
+
+	_, err := DB.Exec(query, username, country, tel)
 	if err != nil {
-		log.Fatalf("Failed to create table: %v", err)
+		return fmt.Errorf("failed to add user: %v", err)
 	}
-	fmt.Println("Table user_data created successfully.")
+
+	return nil
 }
-*/
+ 

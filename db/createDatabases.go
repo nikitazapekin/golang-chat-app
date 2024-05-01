@@ -1,21 +1,11 @@
 package db
 
 import (
-//	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
-		_ "github.com/lib/pq"
 )
-/*
-var (
-	DB *sql.DB
-)
- */
-
-
-
 func CreateTable() {
-
 	fmt.Println("START")
 	if DB == nil {
 		log.Fatal("Database connection is not established. Call Connect function first.")
@@ -24,7 +14,6 @@ func CreateTable() {
 	CREATE TABLE IF NOT EXISTS user_data (
 		username VARCHAR(255),
 		country VARCHAR(255),
-		 
 		tel VARCHAR(255),
 		role VARCHAR(255),
 		registration_data VARCHAR(255),
@@ -40,4 +29,5 @@ func CreateTable() {
 		log.Fatalf("Failed to create table: %v", err)
 	}
 	fmt.Println("Table user_data created successfully.")
+//	AddUser("Nikita", "hh", "kk")
 }
