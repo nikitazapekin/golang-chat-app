@@ -1,24 +1,41 @@
 package controller
+
 import (
-	//"fmt"
-//	"encoding/json"
+	"fmt"
+	"encoding/json"
+ 
 	"net/http"
+
 	"github.com/labstack/echo/v4"
 	// "server/db"
-
 	// m "server/middleware"
 )
 type RegistrationParams struct {
 	Username  string `json:"username"`
 	Country   string `json:"country"`
-	City      string `json:"city"`
-	Telephone string `json:"telephone"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Code  string `json:"code"`
+ 
+	Telephone string `json:"tel"`
+	 
 }
+
+
+
 func Register(c echo.Context) error {
-	/*fmt.Println("CODE IN REGISTER"+code)
+	fmt.Println("CONTROLLEr")
+	var registrationData RegistrationParams
+	err := json.NewDecoder(c.Request().Body).Decode(&registrationData)
+    if err != nil {
+        fmt.Println("Error decoding request body:", err)
+        return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+    }
+    fmt.Println("Received registration data:", registrationData)
+ 
+	return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Registration failed"})  
+}
+/*
+func Register(c echo.Context) error {
+	
+	fmt.Println("CODE IN REGISTER"+code)
     fmt.Println("Is working")
     var registrationData RegistrationParams
     err := json.NewDecoder(c.Request().Body).Decode(&registrationData)
@@ -41,6 +58,7 @@ func Register(c echo.Context) error {
         fmt.Println("Error at registration:", err)
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Registration failed"})
     }
-	return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Registration failed"}) */
+	return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Registration failed"})
 	return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Registration failed"}) 
 }
+*/
