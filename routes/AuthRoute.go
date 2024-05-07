@@ -36,4 +36,6 @@ func Test(c echo.Context) error {
 func SetAuthRoutes(e *echo.Echo) {
     e.POST("/chat/sign-in", controller.Register)
     e.GET("/chat/test", Test)
+	e.GET("/chat/token", controller.GetAccessToken)
+	e.GET("/chat/refresh-token", controller.GetRefreshToken)
 }
