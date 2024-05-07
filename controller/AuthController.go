@@ -31,12 +31,12 @@ func Register(c echo.Context) error {
 	fmt.Println("Received registration data:", registrationData)
 	db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
 
-	 
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": registrationData.Username,
 	})
 
- 
+
 	tokenString, err := token.SignedString([]byte("your-secret-key"))
 	fmt.Println("TOKEN" +tokenString)
 	if err != nil {
@@ -44,7 +44,7 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate token"})
 	}
 
- 
+
 	cookie := new(http.Cookie)
 	cookie.Name = "jwt_token"
 	cookie.Value = tokenString
@@ -55,7 +55,6 @@ func Register(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": "User registered successfully"})
 }
 */
-
 
 /*
 package controller
@@ -146,16 +145,10 @@ func Register(c echo.Context) error {
 	}
 	fmt.Println("Received registration data:", registrationData)
 	db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
- 
+
 	return c.JSON(http.StatusOK, "{message: gggg}")
 }
- */
-
-
-
-
-
-
+*/
 
 /*
 package controller
@@ -238,21 +231,17 @@ func Register(c echo.Context) error {
 }
 */
 
-
-
-
-
 package controller
 
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"time"
-
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/nikita/go-microservices/db"
-	"github.com/dgrijalva/jwt-go"
+	"net/http"
+	"strings"
+	"time"
 )
 
 var currentAccessToken string // Глобальная переменная для хранения текущего access токена
@@ -274,6 +263,7 @@ type RegistrationParams struct {
 	Telephone string `json:"tel"`
 }
 
+/*
 func Register(c echo.Context) error {
 	var registrationData RegistrationParams
 	err := json.NewDecoder(c.Request().Body).Decode(&registrationData)
@@ -282,23 +272,94 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 	fmt.Println("Received registration data:", registrationData)
-	db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
-//	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-	//	"username": registrationData.Username,
-//	})
+	username, country, tel, err := db.FindUserByUsername(registrationData.Username)
+	fmt.Println("USEEEEEEEEER"+username, country, tel, err)
+	fmt.Println("ERRR" )
+	fmt.Println(err)
+	//errStr := err.Error()
+	//fmt.Println(errStr)
+	//fmt.Println("rrr str" +errStr)
+	if username != "" {
+		fmt.Println("USEEEEEEEEER"+username, country, tel, err)
+	} else {
 
+		db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
+	}
 
-accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-    "username": registrationData.Username,
-    "exp":      time.Now().Add(1 * time.Minute).Unix(), // Устанавливаем время истечения срока действия на 1 минуту
-})
-accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
+	if err == nil {
 
-	
-	currentAccessToken = accessTokenString
+		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"username": registrationData.Username,
+			"exp":      time.Now().Add(1 * time.Minute).Unix(), // Устанавливаем время истечения срока действия на 1 минуту
+		})
+		accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
+		currentAccessToken = accessTokenString
+		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"username": registrationData.Username,
+			"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		})
+		refreshTokenString, err := refreshToken.SignedString([]byte("your-secret-key"))
+		if err != nil {
+			fmt.Println("Error signing JWT refresh token:", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate refresh token"})
+		}
+		db.UpdateUserToken(registrationData.Username, refreshTokenString)
+		cookie := http.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshTokenString,
+			Path:     "/",
+			HttpOnly: true,
+		}
+		http.SetCookie(c.Response().Writer, &cookie)
+
+		response := RegistrationResponse{
+			Username:    registrationData.Username,
+			AccessToken: accessTokenString,
+			//Expires: time.Now().Add(1 * time.Minute),
+			RefreshToken: refreshTokenString,
+		}
+		return c.JSON(http.StatusOK, response)
+	} else {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate refresh token"})
+	}
+
+}
+*/
+
+func Register(c echo.Context) error {
+	var registrationData RegistrationParams
+	err := json.NewDecoder(c.Request().Body).Decode(&registrationData)
+	if err != nil {
+		fmt.Println("Error decoding request body:", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+
+	username, country, tel, err := db.FindUserByUsername(registrationData.Username)
+
+	fmt.Println("USEEEEEEEEER"+username, country, tel, err)
+	if err != nil {
+		if strings.Contains(err.Error(), "user with username") {
+			// User not found, let's add them
+			db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
+		} else {
+			fmt.Println("Error finding user:", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to find user"})
+		}
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": registrationData.Username,
+		"exp":      time.Now().Add(1 * time.Minute).Unix(),
+	})
+	accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
+	if err != nil {
+		fmt.Println("Error signing JWT access token:", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate access token"})
+	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": registrationData.Username,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte("your-secret-key"))
 	if err != nil {
@@ -306,36 +367,49 @@ accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate refresh token"})
 	}
 
-	// Set refresh token as HTTP-only cookie
+	db.UpdateUserToken(registrationData.Username, refreshTokenString)
+
 	cookie := http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshTokenString,
 		Path:     "/",
 		HttpOnly: true,
-	//	Expires:  time.Now().Add(24 * time.Hour), // Set expiry time as per your requirement
 	}
 	http.SetCookie(c.Response().Writer, &cookie)
 
 	response := RegistrationResponse{
-		Username:    registrationData.Username,
-		AccessToken: accessTokenString,
-		//Expires: time.Now().Add(1 * time.Minute),
-			RefreshToken: refreshTokenString,
+		Username:     registrationData.Username,
+		AccessToken:  accessTokenString,
+		RefreshToken: refreshTokenString,
 	}
+
 	return c.JSON(http.StatusOK, response)
 }
 
-// Обработчик GET запроса для получения текущего access токена
-
-
-/*
 func GetAccessToken(c echo.Context) error {
-	// Проверяем, есть ли текущий access токен
+	 
 	if currentAccessToken == "" {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Access token not found"})
 	}
+ 
+	token, err := jwt.Parse(currentAccessToken, func(token *jwt.Token) (interface{}, error) {
+ 
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte("your-secret-key"), nil
+	})
 
-	// Возвращаем текущий access токен клиенту
+	if err != nil || !token.Valid {
+	 
+		refreshedToken, err := RefreshAccessTokenInternal()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to refresh access token"})
+		}
+		currentAccessToken = refreshedToken
+	}
+
+ 
 	response := map[string]string{
 		"access_token": currentAccessToken,
 	}
@@ -343,128 +417,75 @@ func GetAccessToken(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-func GetAccessToken(c echo.Context) error {
-    // Проверяем, есть ли текущий access токен
-    if currentAccessToken == "" {
-        return c.JSON(http.StatusNotFound, map[string]string{"error": "Access token not found"})
-    }
-
-    // Проверяем время действия access токена
-    token, err := jwt.Parse(currentAccessToken, func(token *jwt.Token) (interface{}, error) {
-        // Проверяем алгоритм подписи токена
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-        }
-        return []byte("your-secret-key"), nil
-    })
-
-    if err != nil || !token.Valid {
-        // Если access токен недействителен или истек его срок действия,
-        // то обновляем его с помощью функции RefreshAccessToken
-        refreshedToken, err := RefreshAccessTokenInternal()
-        if err != nil {
-            return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to refresh access token"})
-        }
-        currentAccessToken = refreshedToken
-    }
-
-    // Возвращаем текущий access токен клиенту
-    response := map[string]string{
-        "access_token": currentAccessToken,
-    }
-
-    return c.JSON(http.StatusOK, response)
-}
-
 func RefreshAccessTokenInternal() (string, error) {
-    // Генерируем новый access токен
-    accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-        "username": "example_user",
-        "exp":      time.Now().Add(1 * time.Minute).Unix(), // Устанавливаем время истечения срока действия на 1 минуту
-    })
-    accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
-    if err != nil {
-        return "", err
-    }
-    return accessTokenString, nil
+ 
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": "example_user",
+		"exp":      time.Now().Add(1 * time.Minute).Unix(), 
+	})
+	accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
+	if err != nil {
+		return "", err
+	}
+	return accessTokenString, nil
 }
-
-
-
-
 
 func RefreshAccessToken(c echo.Context) error {
-    // Получаем refresh токен из запроса
-    refreshTokenString := c.FormValue("refresh_token")
+	// Получаем refresh токен из запроса
+	refreshTokenString := c.FormValue("refresh_token")
 
-    // Проверяем валидность refresh токена
-    refreshToken, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
-        // Проверяем алгоритм подписи токена
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-        }
-        return []byte("your-secret-key"), nil
-    })
+	// Проверяем валидность refresh токена
+	refreshToken, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
+		// Проверяем алгоритм подписи токена
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte("your-secret-key"), nil
+	})
 
-    if err != nil || !refreshToken.Valid {
-        return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid refresh token"})
-    }
+	if err != nil || !refreshToken.Valid {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid refresh token"})
+	}
 
-    // Извлекаем из refresh токена данные, например, имя пользователя
-    claims, ok := refreshToken.Claims.(jwt.MapClaims)
-    if !ok {
-        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to parse refresh token claims"})
-    }
+	// Извлекаем из refresh токена данные, например, имя пользователя
+	claims, ok := refreshToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to parse refresh token claims"})
+	}
 
-    username := claims["username"].(string)
+	username := claims["username"].(string)
 
-    // Генерируем новый access токен
-    accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-        "username": username,
-        "exp":      time.Now().Add(1 * time.Minute).Unix(), // Устанавливаем время истечения срока действия на 1 минуту
-    })
-    accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
-    if err != nil {
-        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate access token"})
-    }
+	// Генерируем новый access токен
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": username,
+		"exp":      time.Now().Add(1 * time.Minute).Unix(), // Устанавливаем время истечения срока действия на 1 минуту
+	})
+	accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate access token"})
+	}
 
-    // Возвращаем новый access токен клиенту
-    response := map[string]string{
-        "access_token": accessTokenString,
-    }
+	// Возвращаем новый access токен клиенту
+	response := map[string]string{
+		"access_token": accessTokenString,
+	}
 
-    return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, response)
 }
 
-
 func GetRefreshToken(c echo.Context) error {
-    // Получаем значение refresh_token из http-only cookie
-    cookie, err := c.Request().Cookie("refresh_token")
-    if err != nil {
-        return c.JSON(http.StatusNotFound, map[string]string{"error": "Refresh token not found"})
-    }
+	// Получаем значение refresh_token из http-only cookie
+	cookie, err := c.Request().Cookie("refresh_token")
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Refresh token not found"})
+	}
 
-    refreshToken := cookie.Value
+	refreshToken := cookie.Value
 
-    // Возвращаем значение refresh_token клиенту
-    response := map[string]string{
-        "refresh_token": refreshToken,
-    }
+	// Возвращаем значение refresh_token клиенту
+	response := map[string]string{
+		"refresh_token": refreshToken,
+	}
 
-    return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, response)
 }

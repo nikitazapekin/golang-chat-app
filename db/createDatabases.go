@@ -21,7 +21,8 @@ func CreateTable() {
 		last_time_at_network VARCHAR(255),
 		chats JSONB,
         user_id VARCHAR(255),
-        describtion VARCHAR(255)
+        describtion VARCHAR(255),
+		token VARCHAR(255)
 	);
 	`
 	_, err := DB.Exec(query)
