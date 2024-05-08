@@ -359,7 +359,8 @@ func Register(c echo.Context) error {
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": registrationData.Username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+	//	"exp":      time.Now().Add(24 * time.Hour).Unix(),
+	"exp":      time.Now().Add(5 * time.Minute).Unix(), 
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte("your-secret-key"))
 	if err != nil {
@@ -386,49 +387,93 @@ func Register(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+
+
 func GetAccessToken(c echo.Context) error {
-	 
-	if currentAccessToken == "" {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "Access token not found"})
+	fmt.Println("TOKEEEEEEEEEEN")
+
+	// Получаем токен из запроса
+	token := c.QueryParam("token")
+	user := c.QueryParam("user")
+	fmt.Println("USSS" + user)
+	fmt.Println(token)
+
+	// Проверяем, был ли передан токен в запросе
+	if token == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Token not found in query"})
 	}
- 
-	token, err := jwt.Parse(currentAccessToken, func(token *jwt.Token) (interface{}, error) {
- 
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
+
+	// Проверяем валидность refresh токена и получаем данные пользователя
+	foundUsername, country, tel, refreshToken, chats, avatar, description, err := db.FindUserDataByUsername(user)
+	fmt.Println(foundUsername, country, tel, refreshToken, chats, avatar, description, err)
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Internal Server Error"})
+	}
+
+	// Проверяем, найден ли пользователь
+	if foundUsername == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Username not found"})
+	}
+
+	
+	newAccessToken, err := generateAccessToken(user)
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Internal Server Error"})
+	}
+
+	// Отправляем новый access токен на клиент
+	fmt.Println("ACCEEESSSS", newAccessToken)
+	//return c.JSON(http.StatusOK, map[string]string{"access_token": newAccessToken})
+	return c.JSON(http.StatusOK, map[string]string{"token": newAccessToken})
+}
+
+
+
+
+
+
+func tokenExpired(tokenString string) bool {
+	// Парсим токен для получения времени его истечения
+	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Предполагаем, что токен был подписан с использованием HMAC и имеет секретный ключ "my_secret_key"
 		return []byte("your-secret-key"), nil
 	})
 
-	if err != nil || !token.Valid {
-	 
-		refreshedToken, err := RefreshAccessTokenInternal()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to refresh access token"})
-		}
-		currentAccessToken = refreshedToken
+	// Проверяем, была ли ошибка при парсинге токена
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// Получаем время истечения токена из его утверждений
+		expirationTime := time.Unix(int64(claims["exp"].(float64)), 0)
+		// Сравниваем время истечения токена с текущим временем
+		return time.Now().After(expirationTime)
+	} else {
+		fmt.Println("Error parsing token:", token)
+		return true // Если возникла ошибка при парсинге токена, считаем его истекшим
 	}
-
- 
-	response := map[string]string{
-		"access_token": currentAccessToken,
-	}
-
-	return c.JSON(http.StatusOK, response)
 }
 
-func RefreshAccessTokenInternal() (string, error) {
- 
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": "example_user",
-		"exp":      time.Now().Add(1 * time.Minute).Unix(), 
-	})
-	accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
+// Функция для генерации нового access токена
+func generateAccessToken(user string) (string, error) {
+	// Создаем новый токен
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	// Устанавливаем данные пользователя в токен
+	claims := token.Claims.(jwt.MapClaims)
+	claims["username"] = user
+	// Устанавливаем срок годности токена (1 час)
+//	claims["exp"] = time.Now().Add(time.Hour).Unix()
+claims["exp"] = time.Now().Add(time.Minute).Unix()
+
+	// Подписываем токен с использованием секретного ключа
+	tokenString, err := token.SignedString([]byte("your-secret-key"))
 	if err != nil {
 		return "", err
 	}
-	return accessTokenString, nil
+
+	return tokenString, nil
 }
+
 
 func RefreshAccessToken(c echo.Context) error {
 	// Получаем refresh токен из запроса
