@@ -242,6 +242,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+ 
+	// "github.com/example/jwtlib"
 )
 
 var currentAccessToken string // Глобальная переменная для хранения текущего access токена
@@ -262,69 +264,6 @@ type RegistrationParams struct {
 	Country   string `json:"country"`
 	Telephone string `json:"tel"`
 }
-
-/*
-func Register(c echo.Context) error {
-	var registrationData RegistrationParams
-	err := json.NewDecoder(c.Request().Body).Decode(&registrationData)
-	if err != nil {
-		fmt.Println("Error decoding request body:", err)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
-	}
-	fmt.Println("Received registration data:", registrationData)
-	username, country, tel, err := db.FindUserByUsername(registrationData.Username)
-	fmt.Println("USEEEEEEEEER"+username, country, tel, err)
-	fmt.Println("ERRR" )
-	fmt.Println(err)
-	//errStr := err.Error()
-	//fmt.Println(errStr)
-	//fmt.Println("rrr str" +errStr)
-	if username != "" {
-		fmt.Println("USEEEEEEEEER"+username, country, tel, err)
-	} else {
-
-		db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
-	}
-
-	if err == nil {
-
-		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"username": registrationData.Username,
-			"exp":      time.Now().Add(1 * time.Minute).Unix(), // Устанавливаем время истечения срока действия на 1 минуту
-		})
-		accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
-		currentAccessToken = accessTokenString
-		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"username": registrationData.Username,
-			"exp":      time.Now().Add(24 * time.Hour).Unix(),
-		})
-		refreshTokenString, err := refreshToken.SignedString([]byte("your-secret-key"))
-		if err != nil {
-			fmt.Println("Error signing JWT refresh token:", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate refresh token"})
-		}
-		db.UpdateUserToken(registrationData.Username, refreshTokenString)
-		cookie := http.Cookie{
-			Name:     "refresh_token",
-			Value:    refreshTokenString,
-			Path:     "/",
-			HttpOnly: true,
-		}
-		http.SetCookie(c.Response().Writer, &cookie)
-
-		response := RegistrationResponse{
-			Username:    registrationData.Username,
-			AccessToken: accessTokenString,
-			//Expires: time.Now().Add(1 * time.Minute),
-			RefreshToken: refreshTokenString,
-		}
-		return c.JSON(http.StatusOK, response)
-	} else {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate refresh token"})
-	}
-
-}
-*/
 
 func Register(c echo.Context) error {
 	var registrationData RegistrationParams
@@ -360,7 +299,7 @@ func Register(c echo.Context) error {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": registrationData.Username,
 	//	"exp":      time.Now().Add(24 * time.Hour).Unix(),
-	"exp":      time.Now().Add(5 * time.Minute).Unix(), 
+	"exp":      time.Now().Add(2 * time.Minute).Unix(), 
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte("your-secret-key"))
 	if err != nil {
@@ -387,7 +326,7 @@ func Register(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-
+/*
 
 func GetAccessToken(c echo.Context) error {
 	fmt.Println("TOKEEEEEEEEEEN")
@@ -428,9 +367,121 @@ func GetAccessToken(c echo.Context) error {
 	//return c.JSON(http.StatusOK, map[string]string{"access_token": newAccessToken})
 	return c.JSON(http.StatusOK, map[string]string{"token": newAccessToken})
 }
+*/
 
 
 
+
+
+
+
+/*
+func GetRefreshTokenExpirationTime(refreshToken string) (int64, error) {
+	// Парсим токен без проверки подписи, так как нам нужно только время истечения
+	token, _, err := jwt.ParseUnverified(refreshToken, jwt.MapClaims{})
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse token: %v", err)
+	}
+
+	// Получаем время истечения из расшифрованного токена
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, fmt.Errorf("failed to get token claims")
+	}
+	expirationTime := int64(claims["exp"].(float64))
+
+	// Возвращаем время истечения токена refreshToken
+	return expirationTime, nil
+} 
+
+*/
+
+
+func GetRefreshTokenExpirationTime(refreshToken string) (int64, error) {
+	// Парсим токен, игнорируя проверку подписи
+	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
+		return []byte("your-secret-key"), nil  
+	})
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse token: %v", err)
+	}
+
+	// Проверяем, что токен валиден
+	if !token.Valid {
+		return 0, fmt.Errorf("token is invalid")
+	}
+
+	// Получаем время истечения из расшифрованного токена
+	expirationTime := token.Claims.(jwt.MapClaims)["exp"].(float64)
+
+	// Возвращаем время истечения токена refreshToken
+	return int64(expirationTime), nil
+}
+// Проверка годности токена
+func isTokenValid(expirationTime int64) bool {
+	// Получаем текущее время в Unix формате
+	currentTime := time.Now().Unix()
+
+	// Сравниваем время истечения токена с текущим временем
+	if currentTime > expirationTime {
+		// Если текущее время больше времени истечения токена, то токен просрочен
+		return false
+	}
+	// Токен действителен
+	return true
+}
+
+func GetAccessToken(c echo.Context) error {
+	fmt.Println("TOKEEEEEEEEEEN")
+
+	// Получаем токен из запроса
+	token := c.QueryParam("token")
+	user := c.QueryParam("user")
+	fmt.Println("USSS" + user)
+	fmt.Println(token)
+
+	// Проверяем, был ли передан токен в запросе
+	if token == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Token not found in query"})
+	}
+
+	// Проверяем валидность refresh токена и получаем данные пользователя
+	foundUsername, country, tel, refreshToken, chats, avatar, description, err := db.FindUserDataByUsername(user)
+	fmt.Println(foundUsername, country, tel, refreshToken, chats, avatar, description, err)
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка в поиске юзера"})
+	}
+
+	// Проверяем, найден ли пользователь
+	if foundUsername == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Пользователь не найден"})
+	}
+
+	// Получаем время истечения токена refreshToken
+	expirationTime, err := GetRefreshTokenExpirationTime(refreshToken)
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Ошибка вытягивания времени из токена"})
+	}
+
+	// Проверяем годность токена
+	if !isTokenValid(expirationTime) {
+		// Если токен просрочен, отправляем ошибку 401 Unauthorized
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Токен истек"})
+	}
+
+	newAccessToken, err := generateAccessToken(user)
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Ошибка генерации аксес токена"})
+	}
+
+	// Отправляем новый access токен на клиент
+	fmt.Println("ACCEEESSSS", newAccessToken)
+	//return c.JSON(http.StatusOK, map[string]string{"access_token": newAccessToken})
+	return c.JSON(http.StatusOK, map[string]string{"token": newAccessToken})
+}
 
 
 
