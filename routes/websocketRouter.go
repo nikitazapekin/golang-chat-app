@@ -1,164 +1,362 @@
+
+/*
 package router
 
 import (
-	//"fmt"
-	//"github.com/gorilla/websocket"
+	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 //	"log"
-//	"net/http"
+	"net/http"
 
-
-	//"encoding/json"
- //   "time"
-	//e "server/middleware"
-//	m "server/db"
 )
-/*
-var numberOfOnlineUsers = 0
-var clients = make(map[*websocket.Conn]bool)
-var onlineUsersMessage = "%d"
-var (
-	upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-)
+  
+ 
 
-func handleWebSocket(c echo.Context) error { //ХЭНДЛЕРРРРРРРРРРРРРРРР
-	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
-	if err != nil {
-		return err
-	}
-	clients[conn] = true
-	numberOfOnlineUsers++
-	broadcastOnlineUsersMessage()
-	
-	defer func() {
-		numberOfOnlineUsers--
-		delete(clients, conn)
-		broadcastOnlineUsersMessage()
-		conn.Close()
-	}()
+func handleWebSocket(c echo.Context) error {
+    upgrader := websocket.Upgrader{
+        CheckOrigin: func(r *http.Request) bool {
+            return true // Разрешаем все origin
+        },
+    }
 
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Received message: %s\n", p)
-		fmt.Println("CONNNN")
-		fmt.Println(conn)
-		fmt.Println(messageType)
-		fmt.Println(p)
-		err = conn.WriteMessage(messageType, []byte("Hello, client!"))
-		if err != nil {
-			return err
-		}
-	}
+    ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+    if err != nil {
+        return err
+    }
+    defer ws.Close()
+
+    fmt.Println("Пользователь подключился")
+
+    for {
+        messageType, message, err := ws.ReadMessage()
+        if err != nil {
+            fmt.Println("Ошибка чтения сообщения:", err)
+            break
+        }
+
+        fmt.Println("Получено сообщение от пользователя:", string(message))
+
+        // Эхо-отправка сообщения обратно клиенту
+        err = ws.WriteMessage(messageType, message)
+        if err != nil {
+            fmt.Println("Ошибка отправки сообщения:", err)
+            break
+        }
+    }
+
+    fmt.Println("Пользователь отключился")
+    return nil
 }
-func broadcastOnlineUsersMessage() {
-	message := fmt.Sprintf(onlineUsersMessage, numberOfOnlineUsers)
-	fmt.Println("MESSSSSSSSSAAAGE")
-	fmt.Println(message)
-	fmt.Println(clients)
-	for client := range clients {
-		err := client.WriteMessage(websocket.TextMessage, []byte(message))
-		if err != nil {
-			log.Printf("Error sending message to client: %v", err)
-		}
-	}
+
+func InitWebsocketRoutes(e *echo.Echo) {
+    e.GET("/", handleWebSocket)
+}
+*/
+
+
+
+
+
+
+
+
+
+
+/*
+
+package router
+
+import (
+    "fmt"
+    "github.com/gorilla/websocket"
+    "github.com/labstack/echo/v4"
+    "net/http"
+)
+
+func handleWebSocket(c echo.Context) error {
+    upgrader := websocket.Upgrader{
+        CheckOrigin: func(r *http.Request) bool {
+            return true // Allow all origins
+        },
+    }
+
+    ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+    if err != nil {
+        return err
+    }
+    defer ws.Close()
+
+    // Display a message when a user connects
+    fmt.Println("User connected")
+
+    for {
+        messageType, message, err := ws.ReadMessage()
+        if err != nil {
+            fmt.Println("Error reading message:", err)
+            break
+        }
+
+        fmt.Println("Received message from user:", string(message))
+
+        // Echo the message back to the client
+        err = ws.WriteMessage(messageType, message)
+        if err != nil {
+            fmt.Println("Error sending message:", err)
+            break
+        }
+    }
+
+    // Display a message when a user disconnects
+    fmt.Println("User disconnected")
+    return nil
+}
+
+func InitWebsocketRoutes(e *echo.Echo) {
+    e.GET("/", handleWebSocket)
+}
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+package router
+
+import (
+    "fmt"
+    "github.com/gorilla/websocket"
+    "github.com/labstack/echo/v4"
+    "net/http"
+)
+
+var upgrader = websocket.Upgrader{
+    CheckOrigin: func(r *http.Request) bool {
+        // Разрешаем только запросы с определенного origin (http://localhost:5500)
+        return r.Header.Get("Origin") == "http://localhost:5500"
+    },
+}
+
+func handleWebSocket(c echo.Context) error {
+    ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+    if err != nil {
+        return err
+    }
+    defer ws.Close()
+
+    // Отправляем сообщение о подключении
+    err = ws.WriteMessage(websocket.TextMessage, []byte("User connected"))
+    if err != nil {
+        fmt.Println("Error sending message:", err)
+        return err
+    }
+
+    for {
+        messageType, message, err := ws.ReadMessage()
+        if err != nil {
+            fmt.Println("Error reading message:", err)
+            break
+        }
+
+        fmt.Println("Received message from user:", string(message))
+
+        // Отправляем сообщение обратно клиенту
+        err = ws.WriteMessage(messageType, message)
+        if err != nil {
+            fmt.Println("Error sending message:", err)
+            break
+        }
+    }
+
+    // Отображаем сообщение при отключении пользователя
+    fmt.Println("User disconnected")
+    return nil
+}
+
+func InitWebsocketRoutes(e *echo.Echo) {
+    e.GET("/", handleWebSocket)
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package router
+
+import (
+    "fmt"
+    "log"
+    "net/http"
+	"github.com/gorilla/websocket" 
+	"github.com/labstack/echo/v4"
+)
+
+
+var upgrader = websocket.Upgrader{
+    ReadBufferSize:  1024,
+    WriteBufferSize: 1024,
 }
 
  
-
-
-type Message struct {
-    Username string `json:"username"`
-    Token    string `json:"token"`
-    Message  string `json:"message"`
-}
-
-func handlePublicChat(c echo.Context) error {
-    conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
-    if err != nil {
-        return err
-    }
-    clients[conn] = true
-
-    defer func() {
-        delete(clients, conn)
-        conn.Close()
-    }()
-
-    _, msgBytes, err := conn.ReadMessage()
-    if err != nil {
-        log.Printf("Error reading message from client: %v", err)
-        return err
-    }
-
-    var incomingMessage Message
-    err = json.Unmarshal(msgBytes, &incomingMessage)
-    if err != nil {
-        log.Printf("Error unmarshaling message: %v", err)
-        return err
-    }
-
- token := incomingMessage.Token
- decodedToken, errToken := e.Decode(token, "key")
- fmt.Println(errToken)  
-
- fmt.Println("Decoded token")
- fmt.Println(decodedToken)
- user,err := m.FindUserByUsername(decodedToken.Username)
- fmt.Println("USERrr")
- fmt.Println(user)
- fmt.Println("AVATARRRRRRRRRRRRRR")
-fmt.Println(user.Avatar)
-avatarFilename := user.Avatar
-avatarURL := fmt.Sprintf("http://localhost:5000/worklist.com/image/%s", avatarFilename)
-fmt.Println(avatarURL)
-    currentTime := time.Now().Format(time.RFC3339)
-    newMessage := struct {
-        Username string `json:"username"`
-        Message  string `json:"message"`
-        Data     string `json:"data"`
-		Avatar   string `json:"avatar"`
-    }{
-        Username: incomingMessage.Username,
-        Message:  incomingMessage.Message,
-        Data:     currentTime,
-		Avatar:  avatarFilename,
-		//Avatar:   avatarURL,
-    }
-
-    newMessageBytes, err := json.Marshal(newMessage)
-    if err != nil {
-        log.Printf("Error marshaling new message: %v", err)
-        return err
-    }
-
-    handlePublicMessages(string(newMessageBytes))
-
-    return nil
-}
-
-func handlePublicMessages(message string) error {
-    fmt.Println("Received message:", message)
-    fmt.Println(clients)
-    for client := range clients {
-        err := client.WriteMessage(websocket.TextMessage, []byte(message))
+func reader(conn *websocket.Conn) {
+    for {
+    // read in a message
+        messageType, p, err := conn.ReadMessage()
         if err != nil {
-            log.Printf("Error sending message to client: %v", err)
+            log.Println(err)
+            return
+        }
+    // print out that message for clarity
+        fmt.Println(string(p))
+
+        if err := conn.WriteMessage(messageType, p); err != nil {
+            log.Println(err)
+            return
+        }
+
+    }
+}
+
+
+
+func wsEndpoint(w http.ResponseWriter, r *http.Request) {
+    upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	
+    // upgrade this connection to a WebSocket
+    // connection
+    ws, err := upgrader.Upgrade(w, r, nil)
+    if err != nil {
+        log.Println(err)
+    }
+
+    log.Println("Client Connected")
+    err = ws.WriteMessage(1, []byte("Hi Client!"))
+    if err != nil {
+        log.Println(err)
+    }
+ 
+    reader(ws)
+}
+ 
+
+func homePage(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "Home Page")
+}
+func InitWebsocketRoutes(e *echo.Echo) {
+	http.HandleFunc("/", homePage)
+    http.HandleFunc("/ws", wsEndpoint)
+}
+
+
+/*
+func handleWebSocket() {
+    fmt.Println("Hello World")
+    setupRoutes()
+  //  log.Fatal(http.ListenAndServe(":8080", nil))
+}
+	
+*/
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+package router
+
+import (
+	"fmt"
+    "github.com/gorilla/websocket"
+    "github.com/labstack/echo/v4"
+    "net/http"
+)
+
+func handleWebSocket(c echo.Context) error {
+    upgrader := websocket.Upgrader{
+        CheckOrigin: func(r *http.Request) bool {
+            return true // Allow all origins
+        },
+    }
+
+    // Подключение к WebSocket
+    ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+    if err != nil {
+        return err
+    }
+    defer ws.Close()
+
+    // Оповещение о подключении пользователя
+    fmt.Println("Пользователь подключился")
+
+    for {
+        // Чтение сообщения от клиента
+        messageType, message, err := ws.ReadMessage()
+        if err != nil {
+            fmt.Println("Ошибка чтения сообщения:", err)
+            break
+        }
+
+        // Вывод принятого сообщения от клиента
+        fmt.Println("Получено сообщение от пользователя:", string(message))
+
+        // Эхо-отправка сообщения обратно клиенту
+        err = ws.WriteMessage(messageType, message)
+        if err != nil {
+            fmt.Println("Ошибка отправки сообщения:", err)
+            break
         }
     }
+
+    // Оповещение о отключении пользователя
+    fmt.Println("Пользователь отключился")
     return nil
 }
- */
-func InitWebsocketRoutes(e *echo.Echo) {
-	//e.GET("/ws", handleWebSocket)
-//	e.GET("/publicMessages", handlePublicChat)
 
+// Инициализация маршрутов WebSocket
+func InitWebsocketRoutes(e *echo.Echo) {
+    e.GET("/ws", handleWebSocket) // WebSocket-маршрут на "/ws"
 }
+
+*/
