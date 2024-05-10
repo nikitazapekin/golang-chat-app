@@ -356,7 +356,7 @@ func reader(conn *websocket.Conn) {
 func wsEndpoint(c echo.Context) error {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
-	// upgrade this connection to a WebSocket connection
+
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		log.Println(err)
