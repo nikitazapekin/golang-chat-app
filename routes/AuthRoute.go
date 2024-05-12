@@ -38,4 +38,5 @@ func SetAuthRoutes(e *echo.Echo) {
     e.GET("/chat/test", Test)
 	e.GET("/chat/token", controller.GetAccessToken)
 	e.GET("/chat/refresh-token", controller.GetRefreshToken)
+	e.GET("/chat/token-start", controller.GetAccessTokenStart)
 }

@@ -1,5 +1,3 @@
-
-
 package controller
 
 import (
@@ -11,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
- 
 	// "github.com/example/jwtlib"
 )
 
@@ -67,8 +64,8 @@ func Register(c echo.Context) error {
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": registrationData.Username,
-	//	"exp":      time.Now().Add(24 * time.Hour).Unix(),
-	"exp":      time.Now().Add(2 * time.Minute).Unix(), 
+		//	"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"exp": time.Now().Add(2 * time.Minute).Unix(),
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte("your-secret-key"))
 	if err != nil {
@@ -98,7 +95,7 @@ func Register(c echo.Context) error {
 func GetRefreshTokenExpirationTime(refreshToken string) (int64, error) {
 	// Парсим токен, игнорируя проверку подписи
 	token, err := jwt.Parse(refreshToken, func(token *jwt.Token) (interface{}, error) {
-		return []byte("your-secret-key"), nil  
+		return []byte("your-secret-key"), nil
 	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse token: %v", err)
@@ -115,6 +112,7 @@ func GetRefreshTokenExpirationTime(refreshToken string) (int64, error) {
 	// Возвращаем время истечения токена refreshToken
 	return int64(expirationTime), nil
 }
+
 // Проверка годности токена
 func isTokenValid(expirationTime int64) bool {
 	// Получаем текущее время в Unix формате
@@ -181,8 +179,6 @@ func GetAccessToken(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"token": newAccessToken})
 }
 
-
-
 func tokenExpired(tokenString string) bool {
 	// Парсим токен для получения времени его истечения
 	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -211,8 +207,8 @@ func generateAccessToken(user string) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = user
 	// Устанавливаем срок годности токена (1 час)
-//	claims["exp"] = time.Now().Add(time.Hour).Unix()
-claims["exp"] = time.Now().Add(time.Minute).Unix()
+	//	claims["exp"] = time.Now().Add(time.Hour).Unix()
+	claims["exp"] = time.Now().Add(time.Minute).Unix()
 
 	// Подписываем токен с использованием секретного ключа
 	tokenString, err := token.SignedString([]byte("your-secret-key"))
@@ -222,7 +218,6 @@ claims["exp"] = time.Now().Add(time.Minute).Unix()
 
 	return tokenString, nil
 }
-
 
 func RefreshAccessToken(c echo.Context) error {
 	// Получаем refresh токен из запроса
@@ -282,4 +277,13 @@ func GetRefreshToken(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response)
+}
+
+func GetAccessTokenStart(c echo.Context) error {
+	fmt.Println("TOKEEEEEEEEEEN")
+	user := c.QueryParam("user")
+	fmt.Println("USSsssS" + user)
+	foundUsername, country, tel, refreshToken, chats, avatar, description, err := db.FindUserDataByUsername(user)
+	fmt.Println(foundUsername, country, tel, refreshToken, chats, avatar, description, err)
+	return c.JSON(http.StatusOK, map[string]string{"token": "dfd"})
 }
