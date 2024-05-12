@@ -10,5 +10,8 @@ import (
 
 func SetPersonalRoutes(e *echo.Echo) {
     e.GET("/chat/personal", controller.PersonalData)
-    
+    e.GET("/chat/personal-username", controller.PersonalDataByUsername)
 }
+
+
+//personal-username

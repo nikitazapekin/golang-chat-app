@@ -93,84 +93,6 @@ func FindUserByUsername(username string) (string, string, string, error) {
 
 
 
-
-
-/*
-func FindUserDataByUsername(username string) (string, string, string, error) {
-	if DB == nil {
-		return "", "", "", fmt.Errorf("database connection is not established. Call Connect function first")
-	}
-
-	var (
-		foundUsername string
-		country       string
-		tel           string
-		token string
-		avatar string
-		describtion string
-		chats json
-	)
-
-	query := `
-	SELECT username, country, tel, token, chats, avatar, describtion
-	FROM user_data
-	WHERE username = $1
-	`
-
-	row := DB.QueryRow(query, username)
-	err := row.Scan(&foundUsername, &country, &tel, &token &chats &avatar &describtion)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "", "", "", fmt.Errorf("user with username '%s' not found", username)
-		//	return "", "", "", "user with username  not found"
-		}
-		return "", "", "", fmt.Errorf("failed to find user: %v", err)
-	}
-
-	return foundUsername, country, tel, token, chats, avatar, describtion, nil
-}
-*/
-
-
-
-/*
-func FindUserDataByUsername(username string) (string, string, string, string, []byte, string, string, error) {
-    if DB == nil {
-        return "", "", "", "", nil, "", "", fmt.Errorf("database connection is not established. Call Connect function first")
-    }
-
-    var (
-        foundUsername string
-        country       string
-        tel           string
-        token         string
-		avatar        sql.NullString
-     //   avatar        string
-        describtion   string
-        chats         []byte  
-    )
-
-    query := `
-    SELECT username, country, tel, token, chats, avatar, describtion
-    FROM user_data
-    WHERE username = $1
-    `
-
-    row := DB.QueryRow(query, username)
-    err := row.Scan(&foundUsername, &country, &tel, &token, &chats, &avatar, &describtion)
-    if err != nil {
-        if err == sql.ErrNoRows {
-            return "", "", "", "", nil, "", "", fmt.Errorf("user with username '%s' not found", username)
-        }
-        return "", "", "", "", nil, "", "", fmt.Errorf("failed to find user: %v", err)
-    }
-
-    return foundUsername, country, tel, token, chats, avatar, describtion, nil
-}
-
-*/
-
-
 func FindUserDataByUsername(username string) (string, string, string, string, []byte, string, string, error) {
     if DB == nil {
         return "", "", "", "", nil, "", "", fmt.Errorf("database connection is not established. Call Connect function first")
@@ -238,4 +160,13 @@ func UpdateUserToken(username, token string) error {
 		return fmt.Errorf("failed to update user token: %v", err)
 	}
 	return nil
+}
+
+
+func UpdateAccessToken(username, accessToken string) error {
+
+	fmt.Println(("ACCESS TOKEN IN UPFATE" +accessToken))
+	query := "UPDATE user_data SET access_token = $1 WHERE username = $2"
+	_, err := DB.Exec(query, accessToken, username)
+	return err
 }
