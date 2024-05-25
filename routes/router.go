@@ -7,13 +7,5 @@ func InitRoutes(e *echo.Echo) {
 
 	SetAuthRoutes(e)
 	SetPersonalRoutes(e)
-	//InitWebsocketRoutes(e)
-	/*SetAuth(e)
-	SetBookRoutes(e)
-	SetOffersRoutes(e)
-	SetPersonalInformation(e)
-	SetVacancy(e)
-	SetGetPhotos(e)
-	SetFilteredRoutes((e))
-	SetGetUsers(e) */
+	 SetSearchRoutes(e)
 }

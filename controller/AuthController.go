@@ -220,54 +220,6 @@ func generateAccessToken(user string) (string, error) {
 
 
 
-/*
-func RefreshAccessToken(c echo.Context) error {
-	// Получаем refresh токен из запроса
-	refreshTokenString := c.FormValue("refresh_token")
-
-	// Проверяем валидность refresh токена
-	refreshToken, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
-		// Проверяем алгоритм подписи токена
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte("your-secret-key"), nil
-	})
-
-	if err != nil || !refreshToken.Valid {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid refresh token"})
-	}
-
-	// Извлекаем из refresh токена данные, например, имя пользователя
-	claims, ok := refreshToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to parse refresh token claims"})
-	}
-
-	username := claims["username"].(string)
-
-	// Генерируем новый access токен
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(1 * time.Minute).Unix(), // Устанавливаем время истечения срока действия на 1 минуту
-	})
-	accessTokenString, err := accessToken.SignedString([]byte("your-secret-key"))
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate access token"})
-	}
-
-	// Возвращаем новый access токен клиенту
-	response := map[string]string{
-		"access_token": accessTokenString,
-	}
-
-	return c.JSON(http.StatusOK, response)
-}
- */
-
-
-
-
  
 func RefreshAccessToken(c echo.Context) error {
 	// Получаем refresh токен из запроса

@@ -5,7 +5,7 @@ import (
 //	"encoding/json"
 	"fmt"
 	"log"
-
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 var (
@@ -35,28 +35,53 @@ func PingDB() error {
 	return nil
 }
 
-
-
-func AddUser(username, country, tel string) error {
-	if DB == nil {
-		return fmt.Errorf("database connection is not established. Call Connect function first")
-	}
-
-	query := `
-	INSERT INTO user_data (username, country, tel)
-	VALUES ($1, $2, $3)
-	`
-
-	_, err := DB.Exec(query, username, country, tel)
-	if err != nil {
-		return fmt.Errorf("failed to add user: %v", err)
-	}
-
-	return nil
-}
  
 
+ func AddUser(username, country, tel string) error {
+    if DB == nil {
+        return fmt.Errorf("database connection is not established. Call Connect function first")
+    }
 
+    
+    userID := uuid.New().String()
+
+    query := `
+    INSERT INTO user_data (user_id, username, country, tel)
+    VALUES ($1, $2, $3, $4)
+    `
+
+    _, err := DB.Exec(query, userID, username, country, tel)
+    if err != nil {
+        return fmt.Errorf("failed to add user: %v", err)
+    }
+
+    return nil
+}
+
+
+
+func CreateTableChats() {
+    fmt.Println("START")
+    if DB == nil {
+        log.Fatal("Database connection is not established. Call Connect function first.")
+    }
+    query := `
+    CREATE TABLE IF NOT EXISTS user_data (
+        
+        chats JSONB,
+        groups JSONB
+    );
+    `
+    _, err := DB.Exec(query)
+    if err != nil {
+        log.Fatalf("Failed to create table: %v", err)
+    }
+    fmt.Println("Table user_data created successfully.")
+}
+
+
+
+ 
 func FindUserByUsername(username string) (string, string, string, error) {
 	if DB == nil {
 		return "", "", "", fmt.Errorf("database connection is not established. Call Connect function first")
@@ -148,6 +173,84 @@ token      sql.NullString
 
 
 
+
+
+
+type User struct {
+    Username    string `json:"username"`
+    Country     string `json:"country"`
+    Tel         string `json:"tel"`
+    Token       string `json:"token"`
+    Chats       []byte `json:"chats"`
+    Avatar      string `json:"avatar"`
+    Description string `json:"description"`
+}
+
+func FindUsersDataByUsername(username string) ([]User, error) {
+    if DB == nil {
+        return nil, fmt.Errorf("database connection is not established. Call Connect function first")
+    }
+
+    query := `
+    SELECT username, country, tel, token, chats, avatar, describtion
+    FROM user_data
+    WHERE username LIKE '%' || $1 || '%'
+    `
+
+    rows, err := DB.Query(query, username)
+    if err != nil {
+        return nil, fmt.Errorf("failed to query users: %v", err)
+    }
+    defer rows.Close()
+
+    var users []User
+
+    for rows.Next() {
+        var (
+            foundUsername string
+            country       string
+            tel           string
+            token         sql.NullString
+            chats         []byte
+            avatar        sql.NullString
+            description   sql.NullString
+        )
+
+        err := rows.Scan(&foundUsername, &country, &tel, &token, &chats, &avatar, &description)
+        if err != nil {
+            return nil, fmt.Errorf("failed to scan user: %v", err)
+        }
+
+        user := User{
+            Username:    foundUsername,
+            Country:     country,
+            Tel:         tel,
+            Chats:       chats,
+        }
+
+        if token.Valid {
+            user.Token = token.String
+        }
+
+        if avatar.Valid {
+            user.Avatar = avatar.String
+        }
+
+        if description.Valid {
+            user.Description = description.String
+        }
+
+        users = append(users, user)
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, fmt.Errorf("error iterating over rows: %v", err)
+    }
+
+    return users, nil
+}
+
+ 
 
 
 
