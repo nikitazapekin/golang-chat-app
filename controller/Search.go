@@ -33,14 +33,54 @@ func SearchUsers(c echo.Context) error {
 }
  */
 
+
+
+ /*
+
  func SearchUsers(c echo.Context) error {
     username := c.QueryParam("username")
     fmt.Println("Username:", username)
     users, err := db.FindUsersDataByUsername(username)
+	fmt.Println("USERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRSSSSSSSSSSS")
+	fmt.Println(users)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+    }
+return c.JSON(http.StatusOK, "hello" )
+//    return c.JSON(http.StatusOK, users)
+}
+
+*/
+/*
+
+func SearchUsers(c echo.Context) error {
+    username := c.QueryParam("username")
+    fmt.Println("Username:", username)
+    
+    users, err := db.FindUsersDataByUsername(username)
+    fmt.Println("USERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRSSSSSSSSSSS")
+    fmt.Println(users)
+    
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+    }
+    
+    return c.JSON(http.StatusOK, map[string]interface{}{"users": users})
+}
+*/
+
+
+func SearchUsers(c echo.Context) error {
+    username := c.QueryParam("username")
+    fmt.Println("Username:", username)
+
+    users, err := db.FindUsersDataByUsername(username)
+    fmt.Println("USERS")
+    fmt.Println(users)
+    
     if err != nil {
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
     }
 
-    return c.JSON(http.StatusOK, users)
+    return c.JSON(http.StatusOK, map[string]interface{}{"users": users})
 }
-

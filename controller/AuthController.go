@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+
+	"math/rand"
 	// "github.com/example/jwtlib"
 )
 
@@ -31,6 +34,19 @@ type RegistrationParams struct {
 	Telephone string `json:"tel"`
 }
 
+
+func generateRandomColor() string {
+    rand.Seed(time.Now().UnixNano())
+    colors := []string{
+        "orange", "orangered", "darkorange",
+        "blue", "deepskyblue", "dodgerblue", 
+        "green", "limegreen", "seagreen",   
+    }
+    return colors[rand.Intn(len(colors))]
+}
+
+
+
 func Register(c echo.Context) error {
 	var registrationData RegistrationParams
 	err := json.NewDecoder(c.Request().Body).Decode(&registrationData)
@@ -44,7 +60,6 @@ func Register(c echo.Context) error {
 	fmt.Println("USEEEEEEEEER"+username, country, tel, err)
 	if err != nil {
 		if strings.Contains(err.Error(), "user with username") {
-			// User not found, let's add them
 			db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
 		} else {
 			fmt.Println("Error finding user:", err)

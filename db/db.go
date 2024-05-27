@@ -6,11 +6,49 @@ import (
 	"fmt"
 	"log"
 	"github.com/google/uuid"
+    "time"
+    "encoding/json"
+    "math/rand"
 	_ "github.com/lib/pq"
 )
 var (
 	DB *sql.DB
 )
+/*
+type Avatar struct {
+    Text  string `json:"text"`
+    Color string `json:"color"`
+    URL   string `json:"url"`
+}
+
+type User struct {
+    username    string
+    country     string
+    tel         string
+    token       string
+    chats       []byte
+    avatar      Avatar
+    description string
+}
+*/
+
+type Avatar struct {
+    Text  string `json:"text"`
+    Color string `json:"color"`
+    URL   string `json:"url"`
+}
+
+type User struct {
+    Username    string `json:"username"`
+    Country     string `json:"country"`
+    Tel         string `json:"tel"`
+    Token       string `json:"token"`
+    Chats       []byte `json:"chats"`
+    Avatar      Avatar `json:"avatar"`
+    Description string `json:"description"`
+}
+
+
 
 func Connect() {
 	fmt.Println("DB WORK")
@@ -36,7 +74,7 @@ func PingDB() error {
 }
 
  
-
+/*
  func AddUser(username, country, tel string) error {
     if DB == nil {
         return fmt.Errorf("database connection is not established. Call Connect function first")
@@ -57,7 +95,83 @@ func PingDB() error {
 
     return nil
 }
+*/
 
+
+func generateRandomColor() string {
+    rand.Seed(time.Now().UnixNano())
+    // Define color ranges for orange, blue, and green
+    colors := []string{
+        "orange", "orangered", "darkorange", // Orange shades
+        "blue", "deepskyblue", "dodgerblue", // Blue shades
+        "green", "limegreen", "seagreen",    // Green shades
+    }
+    return colors[rand.Intn(len(colors))]
+}
+
+
+/*
+func AddUser(username, country, tel string) error {
+    if DB == nil {
+        return fmt.Errorf("database connection is not established. Call Connect function first")
+    }
+
+    userID := uuid.New().String()
+
+    color := generateRandomColor()
+avatarHTML :=    fmt.Sprintf(
+    `color: %s; text: %c`,
+    color, username[0],
+)
+    query := `
+    INSERT INTO user_data (user_id, username, country, tel, avatar)
+    VALUES ($1, $2, $3, $4, $5)
+    `
+
+    _, err := DB.Exec(query, userID, username, country, tel, avatarHTML)
+    if err != nil {
+        return fmt.Errorf("failed to add user: %v", err)
+    }
+
+    return nil
+}
+
+*/
+
+
+
+func AddUser(username, country, tel string) error {
+    if DB == nil {
+        return fmt.Errorf("database connection is not established. Call Connect function first")
+    }
+
+    userID := uuid.New().String()
+url:= ""
+    color := generateRandomColor()
+    avatar := Avatar{
+        Color: color,
+        Text:  string(username[0]),
+        URL: string(url),
+    }
+
+ 
+    avatarJSON, err := json.Marshal(avatar)
+    if err != nil {
+        return fmt.Errorf("failed to marshal avatar: %v", err)
+    }
+
+    query := `
+    INSERT INTO user_data (user_id, username, country, tel, avatar)
+    VALUES ($1, $2, $3, $4, $5)
+    `
+
+    _, err = DB.Exec(query, userID, username, country, tel, string(avatarJSON))
+    if err != nil {
+        return fmt.Errorf("failed to add user: %v", err)
+    }
+
+    return nil
+}
 
 
 func CreateTableChats() {
@@ -175,7 +289,7 @@ token      sql.NullString
 
 
 
-
+/*
 type User struct {
     Username    string `json:"username"`
     Country     string `json:"country"`
@@ -186,6 +300,17 @@ type User struct {
     Description string `json:"description"`
 }
 
+type Avatar struct {
+    Color string `json:"color"`
+    Text  string `json:"text"`
+    Url string `json:"url"`
+}
+
+*/
+
+
+
+/*
 func FindUsersDataByUsername(username string) ([]User, error) {
     if DB == nil {
         return nil, fmt.Errorf("database connection is not established. Call Connect function first")
@@ -251,8 +376,149 @@ func FindUsersDataByUsername(username string) ([]User, error) {
 }
 
  
+*/
 
 
+
+/*
+func FindUsersDataByUsername(username string) ([]User, error) {
+    if DB == nil {
+        return nil, fmt.Errorf("database connection is not established. Call Connect function first")
+    }
+
+    query := `
+    SELECT username, country, tel, token, chats, avatar, describtion
+    FROM user_data
+    WHERE username LIKE '%' || $1 || '%'
+    `
+
+    rows, err := DB.Query(query, username)
+    if err != nil {
+        return nil, fmt.Errorf("failed to query users: %v", err)
+    }
+    defer rows.Close()
+
+    var users []User
+
+    for rows.Next() {
+        var (
+            foundUsername string
+            country       string
+            tel           string
+            token         sql.NullString
+            chats         []byte
+            avatar        sql.NullString
+            description   sql.NullString
+        )
+
+        err := rows.Scan(&foundUsername, &country, &tel, &token, &chats, &avatar, &description)
+        if err != nil {
+            return nil, fmt.Errorf("failed to scan user: %v", err)
+        }
+
+        user := User{
+            username:    foundUsername,
+            country:     country,
+            tel:         tel,
+            chats:       chats,
+        }
+
+        if token.Valid {
+            user.token = token.String
+        }
+
+        if avatar.Valid {
+            err := json.Unmarshal([]byte(avatar.String), &user.avatar)
+            if err != nil {
+                return nil, fmt.Errorf("failed to unmarshal avatar: %v", err)
+            }
+        }
+
+        if description.Valid {
+            user.description = description.String
+        }
+fmt.Println("useeeeeeeeeeeeer")
+fmt.Println(user)
+        users = append(users, user)
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, fmt.Errorf("error iterating over rows: %v", err)
+    }
+
+    return users, nil
+}
+*/
+
+
+
+func FindUsersDataByUsername(username string) ([]User, error) {
+    if DB == nil {
+        return nil, fmt.Errorf("database connection is not established. Call Connect function first")
+    }
+
+    query := `
+    SELECT username, country, tel, token, chats, avatar, describtion
+    FROM user_data
+    WHERE username LIKE '%' || $1 || '%'
+    `
+
+    rows, err := DB.Query(query, username)
+    if err != nil {
+        return nil, fmt.Errorf("failed to query users: %v", err)
+    }
+    defer rows.Close()
+
+    var users []User
+
+    for rows.Next() {
+        var (
+            foundUsername string
+            country       string
+            tel           string
+            token         sql.NullString
+            chats         []byte
+            avatar        sql.NullString
+            description   sql.NullString
+        )
+
+        err := rows.Scan(&foundUsername, &country, &tel, &token, &chats, &avatar, &description)
+        if err != nil {
+            return nil, fmt.Errorf("failed to scan user: %v", err)
+        }
+
+        user := User{
+            Username:    foundUsername,
+            Country:     country,
+            Tel:         tel,
+            Chats:       chats,
+        }
+
+        if token.Valid {
+            user.Token = token.String
+        }
+
+        if avatar.Valid {
+            err := json.Unmarshal([]byte(avatar.String), &user.Avatar)
+            if err != nil {
+                return nil, fmt.Errorf("failed to unmarshal avatar: %v", err)
+            }
+        }
+
+        if description.Valid {
+            user.Description = description.String
+        }
+        fmt.Println("user")
+        fmt.Println(user)
+        users = append(users, user)
+    }
+
+    if err := rows.Err(); err != nil {
+        return nil, fmt.Errorf("error iterating over rows: %v", err)
+    }
+
+    return users, nil
+}
 
 
  
