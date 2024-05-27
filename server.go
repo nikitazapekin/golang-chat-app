@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+		"encoding/json"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -18,16 +19,18 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
-
+/*
 func reader(conn *websocket.Conn) {
 	for {
 		 
 		messageType, p, err := conn.ReadMessage()
+		fmt.Println("MES TYPE")
+		fmt.Println(messageType)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		 
+		fmt.Println("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPp")
 		fmt.Println(string(p))
 
 		if err := conn.WriteMessage(messageType, p); err != nil {
@@ -36,7 +39,64 @@ func reader(conn *websocket.Conn) {
 		}
 	}
 }
+*/
 
+
+
+
+type Message struct {
+	Name    string `json:"name"`
+	Message string `json:"message"`
+	To      string `json:"to"`
+}
+
+func reader(conn *websocket.Conn) {
+	for {
+		messageType, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Error reading message:", err)
+			return
+		}
+
+		fmt.Println("MES TYPE:", messageType)
+		fmt.Println("Raw message:", string(p))
+
+		var msg Message
+		if err := json.Unmarshal(p, &msg); err != nil {
+			log.Println("Error unmarshaling message:", err)
+			continue
+		}
+
+		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.Name, msg.Message, msg.To)
+
+		if err := conn.WriteMessage(messageType, p); err != nil {
+			log.Println("Error writing message:", err)
+			return
+		}
+	}
+}
+/*
+func reader(conn *websocket.Conn) {
+	for {
+		messageType, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Error reading message:", err)
+			return
+		}
+
+		fmt.Println("MES TYPE:", messageType)
+		fmt.Println("Raw message:", string(p))
+
+
+
+		
+		if err := conn.WriteMessage(messageType, p); err != nil {
+			log.Println("Error writing message:", err)
+			return
+		}
+	}
+}
+ */
 func wsEndpoint(c echo.Context) error {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
