@@ -81,7 +81,7 @@ func Register(c echo.Context) error {
 
 
 			fmt.Println(registrationData.Username)
-			db.CreateUserTable(registrationData.Username)
+	//		db.CreateUserTable(registrationData.Username)
 			//fmt.Println(username)
 			//db.CreateUserTable(username)
 		} else {

@@ -68,28 +68,38 @@ func generateRandomColor() string {
 	return colors[rand.Intn(len(colors))]
 }
 
-func CreateUserTable(username string) {
-    fmt.Println("CTEATING NEW TABLE", username)
-	if DB == nil {
-		log.Fatal("Database connection is not established. Call Connect function first.")
-	}
-	tableName := fmt.Sprintf("user_data_%s", username)
-	query := fmt.Sprintf(`
+
+ 
+
+
+func CreateUserTable(username, userID string) {
+    fmt.Println("CREATING NEW TABLE", username, userID)
+    if DB == nil {
+        log.Fatal("Database connection is not established. Call Connect function first.")
+    }
+    tableName := fmt.Sprintf("user_data_%s", username)
+    createTableQuery := fmt.Sprintf(`
     CREATE TABLE IF NOT EXISTS %s (
         chats JSONB, 
         user_id VARCHAR(255)
         );
     `, tableName)
-	_, err := DB.Exec(query)
-	if err != nil {
-		log.Fatalf("Failed to create table: %v", err)
-	}
-	fmt.Printf("Table %s created successfully.\n", tableName)
+    _, err := DB.Exec(createTableQuery)
+    if err != nil {
+        log.Fatalf("Failed to create table: %v", err)
+    }
+    fmt.Printf("Table %s created successfully.\n", tableName)
+    insertQuery := fmt.Sprintf(`
+    INSERT INTO %s (user_id) 
+    VALUES ($1);
+    `, tableName)
+    _, err = DB.Exec(insertQuery, userID)
+    if err != nil {
+        log.Fatalf("Failed to insert userID: %v", err)
+    }
+    fmt.Printf("user_id %s inserted successfully into %s.\n", userID, tableName)
 }
-
-/*
- */
-
+ 
 func AddUser(username, country, tel string) error {
 	if DB == nil {
 		return fmt.Errorf("database connection is not established. Call Connect function first")
@@ -115,7 +125,9 @@ func AddUser(username, country, tel string) error {
     `
 
 	_, err = DB.Exec(query, userID, username, country, tel, string(avatarJSON))
-	fmt.Println("CREATING NEW USER TABLEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+	fmt.Println("CREATING NEW USER TABLEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", username, userID)
+
+  CreateUserTable(username, userID)
 //	CreateUserTable(username)
 	if err != nil {
 		return fmt.Errorf("failed to add user: %v", err)
