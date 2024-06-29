@@ -1,5 +1,3 @@
-
-
 package main
 
 import (
@@ -12,11 +10,12 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+//	"golang.org/x/text/message"
 
 	db "github.com/nikita/go-microservices/db"
 	m "github.com/nikita/go-microservices/routes"
 
-	_ "github.com/lib/pq"  
+	_ "github.com/lib/pq"
 )
 
 var upgrader = websocket.Upgrader{
@@ -180,15 +179,59 @@ fmt.Println("WSSSSSSSSSSSSSSSSSSSSSS CHAAAAAAAAAAAAAAAAT")
 	connections[userName] = ws
 	mu.Unlock()
 
+
+
+	/*
 	err = ws.WriteMessage(1, []byte("Hi Client!"))
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 	//chats, err := db.FindUsersChat(userName)
-	db.FindUsersChat(userName, companion)
+	messages, err :=db.FindUsersChat(userName, companion)
+	fmt.Println("MS", messages)
+	err = ws.WriteMessage(1, messages)
 	//fmt.Println(chats)
 //	readerChat(ws, userName)
+
+
+*/
+
+
+
+
+
+err = ws.WriteMessage(websocket.TextMessage, []byte("Hi Client!"))
+if err != nil {
+	log.Println(err)
+	return err
+}
+
+messages, err := db.FindUsersChat(userName, companion)
+if err != nil {
+	log.Println(err)
+	return err
+}
+
+messagesJSON, err := json.Marshal(messages)
+if err != nil {
+	log.Println(err)
+	return err
+}
+
+err = ws.WriteMessage(websocket.TextMessage, messagesJSON)
+if err != nil {
+	log.Println(err)
+	return err
+}
+
+
+
+
+
+
+
+
 	return nil
 }
 
