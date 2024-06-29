@@ -1,99 +1,4 @@
-/*
-package main
-import (
-	"fmt"
-	"log"
-	"net/http"
-		"encoding/json"
 
-	"github.com/gorilla/websocket"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-
-
-m"github.com/nikita/go-microservices/routes"
-db "github.com/nikita/go-microservices/db"
-)
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-type Message struct {
-	Name    string `json:"name"`
-	Message string `json:"message"`
-	To      string `json:"to"`
-}
-
-func reader(conn *websocket.Conn) {
-	for {
-		messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("Error reading message:", err)
-			return
-		}
-
-		fmt.Println("MES TYPE:", messageType)
-		fmt.Println("Raw message:", string(p))
-
-		var msg Message
-		if err := json.Unmarshal(p, &msg); err != nil {
-			log.Println("Error unmarshaling message:", err)
-			continue
-		}
-
-		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.Name, msg.Message, msg.To)
-
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println("Error writing message:", err)
-			return
-		}
-	}
-}
-func wsEndpoint(c echo.Context) error {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-fmt.Println("USER IS CONNECTED")
-	log.Println("Client Connected")
-	err = ws.WriteMessage(1, []byte("Hi Client!"))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	reader(ws)
-	return nil
-}
-
-func homePage(c echo.Context) error {
-	return c.String(http.StatusOK, "Home Page")
-}
-
-func main() {
-	r := echo.New()
-	db.Connect()
-	r.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:5500"},
-		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
-		AllowCredentials: true,
-	}))
-
-	r.GET("/chat/hello", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
-
-	r.GET("/", homePage)
-	r.GET("/ws", wsEndpoint)
-	m.InitRoutes(r)
-	fmt.Println("Hello World")
-
-	log.Fatal(r.Start(":5000"))
-}
-*/
 
 package main
 
@@ -118,13 +23,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
-/*
-type Message struct {
-	Name    string `json:"name"`
-	Message string `json:"message"`
-	To      string `json:"to"`
-}
-*/
+ 
 type Message struct {
 	Name    string
 	Message string
@@ -196,19 +95,11 @@ func reader(conn *websocket.Conn, userName string) {
 		foundUsernameTo, countryTo, telTo, refreshTokenTo, chatsTo, avatarTo, descriptionTo, errTo := db.FindUserDataByUsername(msg.To)
 		fmt.Println(foundUsernameTo, countryTo, telTo, refreshTokenTo, chatsTo, avatarTo, descriptionTo, errTo)
 
-	/*	msg = Message{
-			Name:    "User1",
-			Message: "Hello there!",
-			To:      "User2",
-			From:    "User1",
-		} */
-
-
-	//	fmt.Println("ADDDDING")     
-	//	db.AddMessageToChatsTable(msg.From, msg.Message, msg.To)           
+ 
 	if msg.Name != "" && msg.Message != "" && msg.To != "" {
 		fmt.Println("ADDDDING")
 		db.AddMessageToChatsTable(msg.Name, msg.Message, msg.To)
+		db.AddMessageToGetterChatsTable(msg.Name, msg.Message, msg.To)
 	} else {
 		fmt.Println("Error: One or more message fields are empty.", "fr", msg.Name, "mes", msg.Message, "to", msg.To)
 	}
