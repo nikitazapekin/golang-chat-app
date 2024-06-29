@@ -465,3 +465,150 @@ func AddMessageToGetterChatsTable(from, message, to string) {
     }
 }
  
+
+
+
+/*
+type Chat struct {
+	Message string
+	Time    string
+}
+*/
+/*
+type Chat struct {
+	chats  []byte
+	user_id    string
+}
+func FindUsersChat(username string) error {
+	if DB == nil {
+		return fmt.Errorf("database connection is not established. Call Connect function first")
+	}
+
+	if username == "" {
+		return fmt.Errorf("username cannot be empty")
+	}
+
+	tableName := fmt.Sprintf("user_data_%s", username)
+	query := fmt.Sprintf("SELECT chats, user_id FROM %s", tableName)
+
+	rows, err := DB.Query(query)
+	if err != nil {
+		return fmt.Errorf("failed to query user's chat table: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var chat Chat
+		err := rows.Scan(&chat.chats, &chat.user_id)
+		if err != nil {
+			return fmt.Errorf("failed to scan row: %v", err)
+		}
+
+		fmt.Printf("Chatttttttttttttttt: %+v\n", chat)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("error iterating over rows: %v", err)
+	}
+
+	return nil
+}
+
+*/
+
+
+
+
+type Chat struct {
+	Chats  []byte
+	UserID string
+}
+
+func FindUsersChat(username, companion string) error {
+    fmt.Println("COMPPP", username,  companion)
+//func FindUsersChat(username string) ([]Chat, error) {
+	if DB == nil {
+		return fmt.Errorf("database connection is not established. Call Connect function first")
+	}
+
+	if username == "" {
+		return fmt.Errorf("username cannot be empty")
+	}
+
+	tableName := fmt.Sprintf("user_data_%s", username)
+	query := fmt.Sprintf("SELECT user_id, chats FROM %s", tableName)
+
+	rows, err := DB.Query(query)
+	if err != nil {
+		return fmt.Errorf("failed to query user's chat table: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var chat Chat
+		err := rows.Scan(&chat.UserID, &chat.Chats)
+		if err != nil {
+			return fmt.Errorf("failed to scan row: %v", err)
+		}
+
+		fmt.Printf("UserID: %s, Chats: %s\n", chat.UserID, chat.Chats)
+        fmt.Println("CHATS", chat.Chats)
+
+
+
+
+
+
+
+
+
+
+
+        var chats map[string][]Message
+        err = json.Unmarshal([]byte(chat.Chats), &chats)
+        if err != nil {
+            fmt.Println("Ошибка при парсинге JSON:", err)
+         //   return
+        }
+     
+       
+        messages, ok := chats[companion]
+        fmt.Println("MESSSAGES",messages)
+        if !ok {
+            fmt.Printf("Нет чатов для companion %s\n", companion)
+         //   return
+        }
+     
+
+        fmt.Printf("Сообщения для companion %s:\n", companion)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("error iterating over rows: %v", err)
+	}
+
+   // fmt.Printf("CHAT WITH USER", chat.companion)
+/*
+
+   var chats map[string][]Message
+   err := json.Unmarshal([]byte(chat.Chats), &chats)
+   if err != nil {
+       fmt.Println("Ошибка при парсинге JSON:", err)
+    //   return
+   }
+
+   // Получаем массив сообщений для companion
+   messages, ok := chats[companion]
+   if !ok {
+       fmt.Printf("Нет чатов для companion %s\n", companion)
+    //   return
+   }
+
+   // Выводим сообщения в консоль
+   fmt.Printf("Сообщения для companion %s:\n", companion)
+   for _, msg := range messages {
+       fmt.Printf("From: %s, To: %s, Time: %s, Message: %s\n", msg.From, msg.To, msg.Time.Format(time.RFC3339), msg.Message)
+   } */ 
+
+	return nil 
+}

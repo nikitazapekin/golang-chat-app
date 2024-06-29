@@ -36,35 +36,6 @@ var (
 )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
 func reader(conn *websocket.Conn, userName string) {
 	for {
 		messageType, p, err := conn.ReadMessage()
@@ -86,9 +57,6 @@ func reader(conn *websocket.Conn, userName string) {
 		}
 
 		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.Name, msg.Message, msg.To)
-
-
-		//username, country, tel, err := db.FindUserByUsername(msg.Name)
 
 		foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom := db.FindUserDataByUsername(msg.Name)
 		fmt.Println("WEB SOCKETSSSSSSSSS",foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom)
@@ -156,6 +124,82 @@ func homePage(c echo.Context) error {
 	return c.String(http.StatusOK, "Home Page")
 }
 
+
+
+
+
+
+
+
+
+
+
+func readerChat(conn *websocket.Conn, userName string) {
+	for {
+		messageType, p, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("Error reading message:", err)
+			mu.Lock()
+			delete(connections, userName)
+			mu.Unlock()
+			return
+		}
+
+		fmt.Println("MES TYPE:", messageType)
+		fmt.Println("Raw message:", string(p))
+
+		var msg Message
+		if err := json.Unmarshal(p, &msg); err != nil {
+			log.Println("Error unmarshaling message:", err)
+			continue
+		}
+
+		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.Name, msg.Message, msg.To)
+	}
+
+}
+
+func wsChat(c echo.Context) error {
+	userName := c.QueryParam("user")
+	companion := c.QueryParam("companion")
+	fmt.Println("COMP", companion)
+	if userName == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "User name is required")
+	}
+fmt.Println("WSSSSSSSSSSSSSSSSSSSSSS CHAAAAAAAAAAAAAAAAT")
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	fmt.Println("USER IS CONNECTED:", userName)
+	log.Println("Client Connected")
+
+	mu.Lock()
+	connections[userName] = ws
+	mu.Unlock()
+
+	err = ws.WriteMessage(1, []byte("Hi Client!"))
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	//chats, err := db.FindUsersChat(userName)
+	db.FindUsersChat(userName, companion)
+	//fmt.Println(chats)
+//	readerChat(ws, userName)
+	return nil
+}
+
+
+
+
+
+
+
+
+
 func main() {
 	r := echo.New()
 	db.Connect()
@@ -171,6 +215,8 @@ func main() {
 
 	r.GET("/", homePage)
 	r.GET("/ws", wsEndpoint)
+
+	r.GET("/ws/chat", wsChat)
 	m.InitRoutes(r)
 	fmt.Println("Hello World")
 
