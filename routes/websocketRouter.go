@@ -24,14 +24,12 @@ func reader(conn *websocket.Conn) {
         }
 
 
-        fmt.Println("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPp")
+        
         fmt.Println(string(p))
-
         if err := conn.WriteMessage(messageType, p); err != nil {
             log.Println(err)
             return
         }
-
     }
 }
 func wsEndpoint(w http.ResponseWriter, r *http.Request) {

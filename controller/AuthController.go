@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	//"log"
 	"math/rand"
 )
 
@@ -41,9 +42,26 @@ func generateRandomColor() string {
     }
     return colors[rand.Intn(len(colors))]
 }
-
-
-
+/*
+func CreateUserTable(username string) {
+	fmt.Println("CTEATING NEW TABLE")
+	if DB == nil {
+		log.Fatal("Database connection is not established. Call Connect function first.")
+	}
+	tableName := fmt.Sprintf("user_data_%s", username)
+	query := fmt.Sprintf(`
+    CREATE TABLE IF NOT EXISTS %s (
+        chats JSONB, 
+        user_id VARCHAR(255)
+    );
+    `, tableName)
+	_, err := DB.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create table: %v", err)
+	}
+	fmt.Printf("Table %s created successfully.\n", tableName)
+}
+ */
 func Register(c echo.Context) error {
 	var registrationData RegistrationParams
 	err := json.NewDecoder(c.Request().Body).Decode(&registrationData)
@@ -58,6 +76,14 @@ func Register(c echo.Context) error {
 	if err != nil {
 		if strings.Contains(err.Error(), "user with username") {
 			db.AddUser(registrationData.Username, registrationData.Country, registrationData.Telephone)
+			fmt.Println("CREAATINGGGGGGGGGGGGGGGGG USERRRRRRRRRRRRRRRRRRRRRRr", registrationData.Username)
+
+
+
+			fmt.Println(registrationData.Username)
+			db.CreateUserTable(registrationData.Username)
+			//fmt.Println(username)
+			//db.CreateUserTable(username)
 		} else {
 			fmt.Println("Error finding user:", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to find user"})
@@ -75,7 +101,7 @@ func Register(c echo.Context) error {
 	}
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": registrationData.Username,
-		"exp": time.Now().Add(20 * time.Minute).Unix(),
+		"exp": time.Now().Add(200 * time.Minute).Unix(),
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte("your-secret-key"))
 	if err != nil {
@@ -141,7 +167,6 @@ func GetAccessToken(c echo.Context) error {
 	if !isTokenValid(expirationTime) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Токен истек"})
 	}
-
 	newAccessToken, err := generateAccessToken(user)
 	if err != nil {
 		fmt.Println(err)
@@ -149,7 +174,6 @@ func GetAccessToken(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, map[string]string{"token": newAccessToken})
 }
-
 func tokenExpired(tokenString string) bool {
 	token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte("your-secret-key"), nil
@@ -162,8 +186,6 @@ func tokenExpired(tokenString string) bool {
 		return true 
 	}
 }
-
-
 func generateAccessToken(user string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
