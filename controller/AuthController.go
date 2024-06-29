@@ -42,26 +42,7 @@ func generateRandomColor() string {
     }
     return colors[rand.Intn(len(colors))]
 }
-/*
-func CreateUserTable(username string) {
-	fmt.Println("CTEATING NEW TABLE")
-	if DB == nil {
-		log.Fatal("Database connection is not established. Call Connect function first.")
-	}
-	tableName := fmt.Sprintf("user_data_%s", username)
-	query := fmt.Sprintf(`
-    CREATE TABLE IF NOT EXISTS %s (
-        chats JSONB, 
-        user_id VARCHAR(255)
-    );
-    `, tableName)
-	_, err := DB.Exec(query)
-	if err != nil {
-		log.Fatalf("Failed to create table: %v", err)
-	}
-	fmt.Printf("Table %s created successfully.\n", tableName)
-}
- */
+
 func Register(c echo.Context) error {
 	var registrationData RegistrationParams
 	err := json.NewDecoder(c.Request().Body).Decode(&registrationData)

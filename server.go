@@ -49,7 +49,7 @@ func reader(conn *websocket.Conn) {
 			return
 		}
 	}
-} 
+}
 func wsEndpoint(c echo.Context) error {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
@@ -95,17 +95,6 @@ func main() {
 }
 */
 
-
-
-
-
-
-
-
-
-
-
-
 package main
 
 import (
@@ -119,25 +108,63 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	m "github.com/nikita/go-microservices/routes"
 	db "github.com/nikita/go-microservices/db"
+	m "github.com/nikita/go-microservices/routes"
+
+	_ "github.com/lib/pq"  
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
-
+/*
 type Message struct {
 	Name    string `json:"name"`
 	Message string `json:"message"`
 	To      string `json:"to"`
 }
-
+*/
+type Message struct {
+	Name    string
+	Message string
+	To      string
+	From    string
+}
 var (
 	connections = make(map[string]*websocket.Conn)
 	mu          sync.Mutex
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
 
 func reader(conn *websocket.Conn, userName string) {
 	for {
@@ -161,6 +188,30 @@ func reader(conn *websocket.Conn, userName string) {
 
 		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.Name, msg.Message, msg.To)
 
+
+		//username, country, tel, err := db.FindUserByUsername(msg.Name)
+
+		foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom := db.FindUserDataByUsername(msg.Name)
+		fmt.Println("WEB SOCKETSSSSSSSSS",foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom)
+		foundUsernameTo, countryTo, telTo, refreshTokenTo, chatsTo, avatarTo, descriptionTo, errTo := db.FindUserDataByUsername(msg.To)
+		fmt.Println(foundUsernameTo, countryTo, telTo, refreshTokenTo, chatsTo, avatarTo, descriptionTo, errTo)
+
+	/*	msg = Message{
+			Name:    "User1",
+			Message: "Hello there!",
+			To:      "User2",
+			From:    "User1",
+		} */
+
+
+	//	fmt.Println("ADDDDING")     
+	//	db.AddMessageToChatsTable(msg.From, msg.Message, msg.To)           
+	if msg.Name != "" && msg.Message != "" && msg.To != "" {
+		fmt.Println("ADDDDING")
+		db.AddMessageToChatsTable(msg.Name, msg.Message, msg.To)
+	} else {
+		fmt.Println("Error: One or more message fields are empty.", "fr", msg.Name, "mes", msg.Message, "to", msg.To)
+	}
 		if msg.To != "" {
 			mu.Lock()
 			targetConn, ok := connections[msg.To]
@@ -329,8 +380,6 @@ func main() {
 
 
 */
-
-
 
 // go run server.go
 // go mod init github.com/nikita/go-microservices
