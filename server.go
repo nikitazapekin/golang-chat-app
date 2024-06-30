@@ -66,7 +66,7 @@ func reader(conn *websocket.Conn, userName string) {
 	if msg.Name != "" && msg.Message != "" && msg.To != "" {
 		fmt.Println("ADDDDING")
 		db.AddMessageToChatsTable(msg.Name, msg.Message, msg.To)
-		db.AddMessageToGetterChatsTable(msg.Name, msg.Message, msg.To)
+		//db.AddMessageToGetterChatsTable(msg.Name, msg.Message, msg.To)
 	} else {
 		fmt.Println("Error: One or more message fields are empty.", "fr", msg.Name, "mes", msg.Message, "to", msg.To)
 	}
@@ -208,6 +208,8 @@ if err != nil {
 }
 
 messages, err := db.FindUsersChat(userName, companion)
+
+fmt.Println("MSGEEEEEEEEEEEEEEEEES", messages)
 if err != nil {
 	log.Println(err)
 	return err
