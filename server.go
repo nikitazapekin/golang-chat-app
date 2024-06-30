@@ -201,7 +201,7 @@ fmt.Println("WSSSSSSSSSSSSSSSSSSSSSS CHAAAAAAAAAAAAAAAAT")
 
 
 
-err = ws.WriteMessage(websocket.TextMessage, []byte("Hi Client!"))
+//err = ws.WriteMessage(websocket.TextMessage, []byte("Hi Client!"))
 if err != nil {
 	log.Println(err)
 	return err
