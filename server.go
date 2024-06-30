@@ -22,13 +22,23 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
- 
+ /*
 type Message struct {
 	Name    string
 	Message string
 	To      string
 	From    string
 }
+	*/
+
+
+	type Message struct {
+		From    string `json:"from"`
+		Message string `json:"message"`
+		To      string `json:"to"`
+		Time    string `json:"time"`
+	}
+	
 var (
 	connections = make(map[string]*websocket.Conn)
 	mu          sync.Mutex
@@ -49,26 +59,34 @@ func reader(conn *websocket.Conn, userName string) {
 		fmt.Println("MES TYPE:", messageType)
 		fmt.Println("Raw message:", string(p))
 
+		/* 
 		var msg Message
 		if err := json.Unmarshal(p, &msg); err != nil {
 			log.Println("Error unmarshaling message:", err)
 			continue
 		}
+			*/
 
-		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.Name, msg.Message, msg.To)
+			var msg Message
+			if err := json.Unmarshal(p, &msg); err != nil {
+				log.Println("Ошибка при разборе сообщения:", err)
+				continue
+			}
 
-		foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom := db.FindUserDataByUsername(msg.Name)
+		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.From, msg.Message, msg.To)
+
+		foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom := db.FindUserDataByUsername(msg.From)
 		fmt.Println("WEB SOCKETSSSSSSSSS",foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom)
 		foundUsernameTo, countryTo, telTo, refreshTokenTo, chatsTo, avatarTo, descriptionTo, errTo := db.FindUserDataByUsername(msg.To)
 		fmt.Println(foundUsernameTo, countryTo, telTo, refreshTokenTo, chatsTo, avatarTo, descriptionTo, errTo)
 
  
-	if msg.Name != "" && msg.Message != "" && msg.To != "" {
+	if msg.From != "" && msg.Message != "" && msg.To != "" {
 		fmt.Println("ADDDDING")
-		db.AddMessageToChatsTable(msg.Name, msg.Message, msg.To)
+		db.AddMessageToChatsTable(msg.From, msg.Message, msg.To)
 		//db.AddMessageToGetterChatsTable(msg.Name, msg.Message, msg.To)
 	} else {
-		fmt.Println("Error: One or more message fields are empty.", "fr", msg.Name, "mes", msg.Message, "to", msg.To)
+		fmt.Println("Error: One or more message fields are empty.", "fr", msg.From, "mes", msg.Message, "to", msg.To)
 	}
 		if msg.To != "" {
 			mu.Lock()
@@ -153,7 +171,7 @@ func readerChat(conn *websocket.Conn, userName string) {
 			continue
 		}
 
-		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.Name, msg.Message, msg.To)
+		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.From, msg.Message, msg.To)
 	}
 
 }
@@ -179,29 +197,6 @@ fmt.Println("WSSSSSSSSSSSSSSSSSSSSSS CHAAAAAAAAAAAAAAAAT")
 	connections[userName] = ws
 	mu.Unlock()
 
-
-
-	/*
-	err = ws.WriteMessage(1, []byte("Hi Client!"))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	//chats, err := db.FindUsersChat(userName)
-	messages, err :=db.FindUsersChat(userName, companion)
-	fmt.Println("MS", messages)
-	err = ws.WriteMessage(1, messages)
-	//fmt.Println(chats)
-//	readerChat(ws, userName)
-
-
-*/
-
-
-
-
-
-//err = ws.WriteMessage(websocket.TextMessage, []byte("Hi Client!"))
 if err != nil {
 	log.Println(err)
 	return err
@@ -220,7 +215,7 @@ if err != nil {
 	log.Println(err)
 	return err
 }
-
+fmt.Println("MESSAGES JSOOOOOOOOOOOOOOOOOON", messages)
 err = ws.WriteMessage(websocket.TextMessage, messagesJSON)
 if err != nil {
 	log.Println(err)
