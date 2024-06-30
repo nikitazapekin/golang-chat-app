@@ -58,8 +58,8 @@ func PingDB() error {
 }
 
 func generateRandomColor() string {
-    rand.Seed(time.Now().UnixNano())
-    
+	rand.Seed(time.Now().UnixNano())
+
 	colors := []string{
 		"orange", "orangered", "darkorange",
 		"blue", "deepskyblue", "dodgerblue",
@@ -68,38 +68,34 @@ func generateRandomColor() string {
 	return colors[rand.Intn(len(colors))]
 }
 
-
- 
-
-
 func CreateUserTable(username, userID string) {
-    fmt.Println("CREATING NEW TABLE", username, userID)
-    if DB == nil {
-        log.Fatal("Database connection is not established. Call Connect function first.")
-    }
-    tableName := fmt.Sprintf("user_data_%s", username)
-    createTableQuery := fmt.Sprintf(`
+	fmt.Println("CREATING NEW TABLE", username, userID)
+	if DB == nil {
+		log.Fatal("Database connection is not established. Call Connect function first.")
+	}
+	tableName := fmt.Sprintf("user_data_%s", username)
+	createTableQuery := fmt.Sprintf(`
     CREATE TABLE IF NOT EXISTS %s (
         chats JSONB, 
         user_id VARCHAR(255)
         );
     `, tableName)
-    _, err := DB.Exec(createTableQuery)
-    if err != nil {
-        log.Fatalf("Failed to create table: %v", err)
-    }
-    fmt.Printf("Table %s created successfully.\n", tableName)
-    insertQuery := fmt.Sprintf(`
+	_, err := DB.Exec(createTableQuery)
+	if err != nil {
+		log.Fatalf("Failed to create table: %v", err)
+	}
+	fmt.Printf("Table %s created successfully.\n", tableName)
+	insertQuery := fmt.Sprintf(`
     INSERT INTO %s (user_id) 
     VALUES ($1);
     `, tableName)
-    _, err = DB.Exec(insertQuery, userID)
-    if err != nil {
-        log.Fatalf("Failed to insert userID: %v", err)
-    }
-    fmt.Printf("user_id %s inserted successfully into %s.\n", userID, tableName)
+	_, err = DB.Exec(insertQuery, userID)
+	if err != nil {
+		log.Fatalf("Failed to insert userID: %v", err)
+	}
+	fmt.Printf("user_id %s inserted successfully into %s.\n", userID, tableName)
 }
- 
+
 func AddUser(username, country, tel string) error {
 	if DB == nil {
 		return fmt.Errorf("database connection is not established. Call Connect function first")
@@ -127,8 +123,8 @@ func AddUser(username, country, tel string) error {
 	_, err = DB.Exec(query, userID, username, country, tel, string(avatarJSON))
 	fmt.Println("CREATING NEW USER TABLEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", username, userID)
 
-  CreateUserTable(username, userID)
-//	CreateUserTable(username)
+	CreateUserTable(username, userID)
+	//	CreateUserTable(username)
 	if err != nil {
 		return fmt.Errorf("failed to add user: %v", err)
 	}
@@ -315,158 +311,145 @@ func UpdateAccessToken(username, accessToken string) error {
 	_, err := DB.Exec(query, accessToken, username)
 	return err
 }
- 
+
 type Message struct {
-    From    string `json:"from"`
-    To      string `json:"to"`
-    Message string `json:"message"`
-    Time    string `json:"time"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Message string `json:"message"`
+	Time    string `json:"time"`
 }
 
 func AddMessageToChatsTable(from, message, to string) {
-    fmt.Println("ADDING")
-    tableName := fmt.Sprintf("user_data_%s", from)
-    query := fmt.Sprintf("SELECT user_id, chats FROM %s", tableName)
+	fmt.Println("ADDING")
+	tableName := fmt.Sprintf("user_data_%s", from)
+	query := fmt.Sprintf("SELECT user_id, chats FROM %s", tableName)
 
-    rows, err := DB.Query(query)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer rows.Close()
+	rows, err := DB.Query(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var userID string
-        var chats []byte
+	for rows.Next() {
+		var userID string
+		var chats []byte
 
-        err := rows.Scan(&userID, &chats)
-        if err != nil {
-            log.Fatal(err)
-        }
+		err := rows.Scan(&userID, &chats)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-        fmt.Printf("UserID: %s, Chats: %s\n", userID, chats)
+		fmt.Printf("UserID: %s, Chats: %s\n", userID, chats)
 
-        var chatsMap map[string]interface{}
-        if len(chats) == 0 {
-            chatsMap = make(map[string]interface{})
-        } else {
-            err = json.Unmarshal(chats, &chatsMap)
-            if err != nil {
-                log.Fatal(err)
-            }
-        }
+		var chatsMap map[string]interface{}
+		if len(chats) == 0 {
+			chatsMap = make(map[string]interface{})
+		} else {
+			err = json.Unmarshal(chats, &chatsMap)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
-        currentTime := time.Now().Format(time.RFC3339)
-        newMessage := Message{
-            From:    from,
-            To:      to,
-            Message: message,
-            Time:    currentTime,
-        }
+		currentTime := time.Now().Format(time.RFC3339)
+		newMessage := Message{
+			From:    from,
+			To:      to,
+			Message: message,
+			Time:    currentTime,
+		}
 
-        if chatWithTo, ok := chatsMap[to]; ok {
-            chatArray := chatWithTo.([]interface{})
-            chatArray = append(chatArray, newMessage)
-            chatsMap[to] = chatArray
-        } else {
-            chatsMap[to] = []Message{newMessage}
-        }
+		if chatWithTo, ok := chatsMap[to]; ok {
+			chatArray := chatWithTo.([]interface{})
+			chatArray = append(chatArray, newMessage)
+			chatsMap[to] = chatArray
+		} else {
+			chatsMap[to] = []Message{newMessage}
+		}
 
-        updatedChats, err := json.Marshal(chatsMap)
-        if err != nil {
-            log.Fatal(err)
-        }
+		updatedChats, err := json.Marshal(chatsMap)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-        
-        updateQuery := fmt.Sprintf("UPDATE %s SET chats = $1 WHERE user_id = $2", tableName)
-        _, err = DB.Exec(updateQuery, updatedChats, userID)
-        if err != nil {
-            log.Fatal(err)
-        }
-    }
+		updateQuery := fmt.Sprintf("UPDATE %s SET chats = $1 WHERE user_id = $2", tableName)
+		_, err = DB.Exec(updateQuery, updatedChats, userID)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
-    err = rows.Err()
-    if err != nil {
-        log.Fatal(err)
-    }
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
- 
-
-
-
-
-
-
-
 
 func AddMessageToGetterChatsTable(from, message, to string) {
-    fmt.Println("ADDING")
-    tableName := fmt.Sprintf("user_data_%s",to)
-    query := fmt.Sprintf("SELECT user_id, chats FROM %s", tableName)
+	fmt.Println("ADDING")
+	tableName := fmt.Sprintf("user_data_%s", to)
+	query := fmt.Sprintf("SELECT user_id, chats FROM %s", tableName)
+	rows, err := DB.Query(query)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
-    rows, err := DB.Query(query)
-    if err != nil {
-        log.Fatal(err)
-    }
-    defer rows.Close()
+	for rows.Next() {
+		var userID string
+		var chats []byte
 
-    for rows.Next() {
-        var userID string
-        var chats []byte
+		err := rows.Scan(&userID, &chats)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-        err := rows.Scan(&userID, &chats)
-        if err != nil {
-            log.Fatal(err)
-        }
+		fmt.Printf("UserID: %s, Chats: %s\n", userID, chats)
 
-        fmt.Printf("UserID: %s, Chats: %s\n", userID, chats)
+		var chatsMap map[string]interface{}
+		if len(chats) == 0 {
+			chatsMap = make(map[string]interface{})
+		} else {
+			err = json.Unmarshal(chats, &chatsMap)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
-        var chatsMap map[string]interface{}
-        if len(chats) == 0 {
-            chatsMap = make(map[string]interface{})
-        } else {
-            err = json.Unmarshal(chats, &chatsMap)
-            if err != nil {
-                log.Fatal(err)
-            }
-        }
+		currentTime := time.Now().Format(time.RFC3339)
+		newMessage := Message{
+			From:    from,
+			To:      to,
+			Message: message,
+			Time:    currentTime,
+		}
 
-        currentTime := time.Now().Format(time.RFC3339)
-        newMessage := Message{
-            From:    from,
-            To:      to,
-            Message: message,
-            Time:    currentTime,
-        }
+		if chatWithTo, ok := chatsMap[to]; ok {
+			chatArray := chatWithTo.([]interface{})
+			chatArray = append(chatArray, newMessage)
+			chatsMap[to] = chatArray
+		} else {
+			//      chatsMap[to] = []Message{newMessage}
+			chatsMap[from] = []Message{newMessage}
+		}
 
-        if chatWithTo, ok := chatsMap[to]; ok {
-            chatArray := chatWithTo.([]interface{})
-            chatArray = append(chatArray, newMessage)
-            chatsMap[to] = chatArray
-        } else {
-            chatsMap[to] = []Message{newMessage}
-        }
+		updatedChats, err := json.Marshal(chatsMap)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-        updatedChats, err := json.Marshal(chatsMap)
-        if err != nil {
-            log.Fatal(err)
-        }
+		updateQuery := fmt.Sprintf("UPDATE %s SET chats = $1 WHERE user_id = $2", tableName)
+		_, err = DB.Exec(updateQuery, updatedChats, userID)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
-        
-        updateQuery := fmt.Sprintf("UPDATE %s SET chats = $1 WHERE user_id = $2", tableName)
-        _, err = DB.Exec(updateQuery, updatedChats, userID)
-        if err != nil {
-            log.Fatal(err)
-        }
-    }
-
-    err = rows.Err()
-    if err != nil {
-        log.Fatal(err)
-    }
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
- 
-
-
 
 /*
 type Chat struct {
@@ -516,14 +499,10 @@ func FindUsersChat(username string) error {
 
 */
 
-
-
-
 type Chat struct {
 	Chats  []byte
 	UserID string
 }
-
 
 /*
 func FindUsersChat(username, companion string) error  {
@@ -568,7 +547,7 @@ func FindUsersChat(username, companion string) error  {
             fmt.Printf("Нет чатов для companion %s\n", companion)
          //   return
         }
-     
+
 
         fmt.Printf("Сообщения для companion %s:\n", companion)
 	}
@@ -578,11 +557,9 @@ func FindUsersChat(username, companion string) error  {
 	}
 
 
-	return nil 
+	return nil
 }
 */
-
-
 
 func FindUsersChat(username, companion string) ([]Message, error) {
 	fmt.Println("COMPPP", username, companion)
@@ -620,7 +597,7 @@ func FindUsersChat(username, companion string) ([]Message, error) {
 		err = json.Unmarshal([]byte(chat.Chats), &chats)
 		if err != nil {
 			fmt.Println("Ошибка при парсинге JSON:", err)
-			continue 
+			continue
 		}
 		chatMessages, ok := chats[companion]
 		fmt.Println("MESSSAGES", chatMessages)
