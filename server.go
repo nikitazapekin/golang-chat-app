@@ -183,7 +183,7 @@ func wsChat(c echo.Context) error {
 	if userName == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "User name is required")
 	}
-fmt.Println("WSSSSSSSSSSSSSSSSSSSSSS CHAAAAAAAAAAAAAAAAT")
+
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
