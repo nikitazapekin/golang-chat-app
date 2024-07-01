@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-//	"golang.org/x/text/message"
+
 
 	db "github.com/nikita/go-microservices/db"
 	m "github.com/nikita/go-microservices/routes"
@@ -22,15 +22,6 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
- /*
-type Message struct {
-	Name    string
-	Message string
-	To      string
-	From    string
-}
-	*/
-
 
 	type Message struct {
 		From    string `json:"from"`
@@ -58,22 +49,12 @@ func reader(conn *websocket.Conn, userName string) {
 
 		fmt.Println("MES TYPE:", messageType)
 		fmt.Println("Raw message:", string(p))
-
-		/* 
-		var msg Message
-		if err := json.Unmarshal(p, &msg); err != nil {
-			log.Println("Error unmarshaling message:", err)
-			continue
-		}
-			*/
-
 			var msg Message
 			if err := json.Unmarshal(p, &msg); err != nil {
 				log.Println("Ошибка при разборе сообщения:", err)
 				continue
 			}
 
-		fmt.Printf("Parsed message: Name=%s, Message=%s, To=%s\n", msg.From, msg.Message, msg.To)
 
 		foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom := db.FindUserDataByUsername(msg.From)
 		fmt.Println("WEB SOCKETSSSSSSSSS",foundUsernameFrom, countryFrom, telFrom, refreshTokenFrom, chatsFrom, avatarFrom, descriptionFrom, errFrom)
@@ -82,9 +63,7 @@ func reader(conn *websocket.Conn, userName string) {
 
  
 	if msg.From != "" && msg.Message != "" && msg.To != "" {
-		fmt.Println("ADDDDING")
 		db.AddMessageToChatsTable(msg.From, msg.Message, msg.To)
-		//db.AddMessageToGetterChatsTable(msg.Name, msg.Message, msg.To)
 	} else {
 		fmt.Println("Error: One or more message fields are empty.", "fr", msg.From, "mes", msg.Message, "to", msg.To)
 	}
@@ -107,13 +86,11 @@ func reader(conn *websocket.Conn, userName string) {
 		}
 	}
 }
-
 func wsEndpoint(c echo.Context) error {
 	userName := c.QueryParam("user")
 	if userName == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "User name is required")
 	}
-
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
@@ -141,16 +118,6 @@ func homePage(c echo.Context) error {
 	return c.String(http.StatusOK, "Home Page")
 }
 
-
-
-
-
-
-
-
-
-
-
 func readerChat(conn *websocket.Conn, userName string) {
 	for {
 		messageType, p, err := conn.ReadMessage()
@@ -163,7 +130,7 @@ func readerChat(conn *websocket.Conn, userName string) {
 		}
 
 		fmt.Println("MES TYPE:", messageType)
-		fmt.Println("Raw message:", string(p))
+
 
 		var msg Message
 		if err := json.Unmarshal(p, &msg); err != nil {
@@ -179,20 +146,16 @@ func readerChat(conn *websocket.Conn, userName string) {
 func wsChat(c echo.Context) error {
 	userName := c.QueryParam("user")
 	companion := c.QueryParam("companion")
-	fmt.Println("COMP", companion)
 	if userName == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "User name is required")
 	}
-
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	fmt.Println("USER IS CONNECTED:", userName)
 	log.Println("Client Connected")
-
 	mu.Lock()
 	connections[userName] = ws
 	mu.Unlock()
@@ -204,7 +167,6 @@ if err != nil {
 
 messages, err := db.FindUsersChat(userName, companion)
 
-fmt.Println("MSGEEEEEEEEEEEEEEEEES", messages)
 if err != nil {
 	log.Println(err)
 	return err
